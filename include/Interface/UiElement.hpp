@@ -33,7 +33,7 @@ class UiElement {
         virtual void mouseWheelMoved(Vector2f const& position, int delta) {}
         virtual void mouseLeft(bool down);
         virtual void keyEvent(bool down, Key const& key) {}
-        virtual void textEntered(sf::Uint32 keyCode) {}
+        virtual void textEntered(char32_t keyCode) {}
         virtual bool tabNext() {return true;}
         virtual bool tabPrevious() {return true;}
 

@@ -47,7 +47,6 @@ namespace window {
         sf::RenderWindow  window_;
         sf::Clock         clock_;
         sf::RenderTexture backBuffer_;
-        sf::Sprite        fxImage_;
 
         Vector2f         viewPort_;
         float            scale_(static_cast<float>(settings::C_resX)/SPACE_X_RESOLUTION);
@@ -56,14 +55,14 @@ namespace window {
 
         void setViewPort() {
             const int windowHeight(window_.getSize().y), windowWidth(window_.getSize().x);
-            sf::View view(sf::FloatRect(0,0, windowWidth, windowHeight));
+            sf::View view(sf::FloatRect({0,0}, {windowWidth, windowHeight}));
             if (static_cast<float>(windowWidth)/windowHeight > ratio) {
 
-                view.setViewport(sf::FloatRect((windowWidth-viewPort_.x_)*0.5f / windowWidth, 0, 1, 1));
+                view.setViewport(sf::FloatRect({(windowWidth-viewPort_.x_)*0.5f / windowWidth, 0}, {1, 1}));
                 glViewport((windowWidth-viewPort_.x_)*0.5f, 0, viewPort_.x_, viewPort_.y_);
             }
             else {
-                view.setViewport(sf::FloatRect(0, (windowHeight-viewPort_.y_)*0.5f / windowHeight, 1, 1));
+                view.setViewport(sf::FloatRect({0, (windowHeight-viewPort_.y_)*0.5f / windowHeight}, {1, 1}));
                 glViewport(0, (windowHeight-viewPort_.y_)*0.5f, viewPort_.x_, viewPort_.y_);
             }
 
@@ -91,55 +90,54 @@ namespace window {
             if (settings::C_shaders) {
                 backBuffer_.setActive(true);
                 backBuffer_.clear();
-                backBuffer_.create(viewPort_.x_, viewPort_.y_);
+                backBuffer_.resize({viewPort_.x_, viewPort_.y_});
                 backBuffer_.setSmooth(false);
             }
         }
 
         void update() {
             timer::update(clock_.restart().asSeconds());
-            sf::Event event;
-            while (window_.pollEvent(event)) {
-                if      (event.type == sf::Event::Resized)
+            while (const auto event = window_.pollEvent()) {
+                if    (event->is<sf::Event::Resized>())
                     resized();
-                else if (event.type == sf::Event::Closed)
+                else if (event->is<sf::Event::Closed>())
                     close();
-                else if (event.type == sf::Event::KeyPressed) {
+                else if (auto *keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                     if (!menus::visible())
-                        controllers::singleKeyEvent(Key(event.key.code));
-                    menus::keyEvent(true, Key(event.key.code));
+                        controllers::singleKeyEvent(Key(keyPressed->code));
+                    menus::keyEvent(true, Key(keyPressed->code));
                 }
-                else if (event.type == sf::Event::KeyReleased) {
-                    menus::keyEvent(false, Key(event.key.code));
+                else if (auto *keyReleased = event->getIf<sf::Event::KeyReleased>()) {
+                    menus::keyEvent(false, Key(keyReleased->code));
                 }
-                else if (event.type == sf::Event::TextEntered) {
+                else if (auto *textEntered = event->getIf<sf::Event::TextEntered>()) {
                     if (menus::visible())
-                        menus::textEntered(event.text.unicode);
+                        menus::textEntered(textEntered->unicode);
                 }
-                else if (event.type == sf::Event::MouseMoved) {
+                else if (auto *mouseMoved = event->getIf<sf::Event::MouseMoved>()) {
                     if (menus::visible())
-                        menus::mouseMoved(Vector2f(event.mouseMove.x - (window_.getSize().x - viewPort_.x_)/2, event.mouseMove.y - (window_.getSize().y - viewPort_.y_)/2));
+                        menus::mouseMoved(Vector2f(mouseMoved->position.x - (window_.getSize().x - viewPort_.x_)/2, mouseMoved->position.y - (window_.getSize().y - viewPort_.y_)/2));
                 }
-                else if (event.type == sf::Event::MouseButtonPressed) {
-                    if (menus::visible() && event.mouseButton.button == sf::Mouse::Left)
+                else if (auto *mousePressed = event->getIf<sf::Event::MouseButtonPressed>()) {
+                    if (menus::visible() && mousePressed->button == sf::Mouse::Button::Left)
                         menus::mouseLeft(true);
                 }
-                else if (event.type == sf::Event::MouseButtonReleased) {
-                    if (menus::visible() && event.mouseButton.button == sf::Mouse::Left)
+                else if (auto *mouseReleased = event->getIf<sf::Event::MouseButtonReleased>()) {
+                    if (menus::visible() && mouseReleased->button == sf::Mouse::Button::Left)
                         menus::mouseLeft(false);
                 }
-                else if (event.type == sf::Event::JoystickButtonPressed) {
+                else if (auto *joystickPressed = event->getIf<sf::Event::JoystickButtonPressed>()) {
                     if (timer::realTotalTime() - joyButtonTimer_ > 0.1f) {
                         if (!menus::visible())
-                            controllers::singleKeyEvent(Key(event.joystickButton.joystickId, event.joystickButton.button));
-                        menus::keyEvent(true, Key(event.joystickButton.joystickId, event.joystickButton.button));
+                            controllers::singleKeyEvent(Key(joystickPressed->joystickId, joystickPressed->button));
+                        menus::keyEvent(true, Key(joystickPressed->joystickId, joystickPressed->button));
                         joyButtonTimer_ = timer::realTotalTime();
                     }
                 }
-                else if (event.type == sf::Event::JoystickButtonReleased)
-                    menus::keyEvent(false, Key(event.joystickButton.joystickId, event.joystickButton.button));
-                else if (event.type == sf::Event::JoystickMoved) {
-                    Key key(event.joystickMove.joystickId, event.joystickMove.axis, event.joystickMove.position);
+                else if (auto *joystickReleased = event->getIf<sf::Event::JoystickButtonReleased>())
+                    menus::keyEvent(false, Key(joystickReleased->joystickId, joystickReleased->button));
+                else if (auto *joystickMoved = event->getIf<sf::Event::JoystickMoved>()) {
+                    Key key(joystickMoved->joystickId, joystickMoved->axis, joystickMoved->position);
                     if (key.strength_ >= 95 && timer::realTotalTime() - joyButtonTimer_ > 0.1f) {
                         if (!menus::visible())
                             controllers::singleKeyEvent(key);
@@ -148,9 +146,9 @@ namespace window {
                         joyButtonTimer_ = timer::realTotalTime();
                     }
                 }
-                else if (event.type == sf::Event::MouseWheelMoved) {
+                else if (auto *mouseScrolled = event->getIf<sf::Event::MouseWheelScrolled>()) {
                     if (menus::visible())
-                        menus::mouseWheelMoved(Vector2f(event.mouseWheel.x - (window_.getSize().x - viewPort_.x_)/2, event.mouseWheel.y - (window_.getSize().y - viewPort_.y_)/2), event.mouseWheel.delta);
+                        menus::mouseWheelMoved(Vector2f(mouseScrolled->position.x - (window_.getSize().x - viewPort_.x_)/2, mouseScrolled->position.y - (window_.getSize().y - viewPort_.y_)/2), mouseScrolled->delta);
                 }
             }
         }
@@ -189,10 +187,10 @@ namespace window {
     }
 
     void create() {
-        sf::VideoMode mode(settings::C_resX, settings::C_resY, settings::C_colorDepth);
+        sf::VideoMode mode({settings::C_resX, settings::C_resY}, settings::C_colorDepth);
 
         if (settings::C_fullScreen && mode.isValid())
-            window_.create(mode, "M.A.R.S. - a " + generateName::game(), sf::Style::Fullscreen);
+            window_.create(mode, "M.A.R.S. - a " + generateName::game(), sf::State::Fullscreen);
         else
             window_.create(mode, "M.A.R.S. - a " + generateName::game());
         window_.setVerticalSyncEnabled(settings::C_vsync);
@@ -202,7 +200,7 @@ namespace window {
             // apple uses bundle icon instead
             sf::Image icon;
             icon.loadFromFile(settings::C_dataPath + "tex/icon.png");
-            window_.setIcon(icon.getSize().x, icon.getSize().y, icon.getPixelsPtr());
+            window_.setIcon(icon);
         # endif
 
         resized();
@@ -272,8 +270,7 @@ namespace window {
             glMatrixMode(GL_MODELVIEW);
             glLoadIdentity();
 
-            fxImage_.setTexture(backBuffer_.getTexture(), true);
-
+            sf::Sprite fxImage_(backBuffer_.getTexture());
             sf::Shader* shader = postFX::get();
             draw(fxImage_, sf::RenderStates(sf::BlendNone), shader);
 
@@ -346,7 +343,9 @@ namespace window {
     }
 
     void screenShot() {
-        sf::Image shot = window_.capture();
+        sf::Texture shot_texture(window_.getSize());
+        shot_texture.update(window_);
+        sf::Image shot = shot_texture.copyToImage();
        // const int windowHeight(window_.GetHeight()), windowWidth(window_.GetWidth());
        // if (static_cast<float>(windowWidth)/windowHeight > ratio)
        //     shot.Copy(window_, sf::IntRect((windowWidth-viewPort_.x_)*0.5f, 0, viewPort_.x_, viewPort_.y_));

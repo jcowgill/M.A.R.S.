@@ -64,7 +64,7 @@ namespace postFX {
                     exposure_ = 1.f;
             }
 
-            postFX_.setParameter("Exposure", exposure_);
+            postFX_.setUniform("Exposure", exposure_);
         }
     }
 
@@ -82,10 +82,10 @@ namespace postFX {
 
     void load() {
         if (supported()) {
-            postFX_.loadFromFile(settings::C_dataPath + "shaders/bump.frag", sf::Shader::Fragment);
-            bumpMap_.create(SPACE_X_RESOLUTION*0.5f, SPACE_Y_RESOLUTION*0.5f);
-            postFX_.setParameter("BumpMap", bumpMap_.getTexture());
-            postFX_.setParameter("Exposure", exposure_);
+            postFX_.loadFromFile(settings::C_dataPath + "shaders/bump.frag", sf::Shader::Type::Fragment);
+            bumpMap_.resize({SPACE_X_RESOLUTION / 2, SPACE_Y_RESOLUTION / 2});
+            postFX_.setUniform("BumpMap", bumpMap_.getTexture());
+            postFX_.setUniform("Exposure", exposure_);
         }
         else
             std::cout << "Shaders are not supported on your hardware! There will be no fancy graphics..." << std::endl;
