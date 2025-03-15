@@ -92,7 +92,6 @@ namespace window {
                 backBuffer_.setActive(true);
                 backBuffer_.clear();
                 backBuffer_.create(viewPort_.x_, viewPort_.y_);
-                glViewport(0,0,viewPort_.x_, viewPort_.y_);
                 backBuffer_.setSmooth(false);
             }
         }
@@ -238,8 +237,10 @@ namespace window {
         glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        if (settings::C_shaders)
+        if (settings::C_shaders) {
             backBuffer_.setActive(true);
+            glViewport(0,0,viewPort_.x_, viewPort_.y_);
+        }
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
