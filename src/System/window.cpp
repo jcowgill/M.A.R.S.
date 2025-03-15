@@ -51,7 +51,6 @@ namespace window {
 
         Vector2f         viewPort_;
         float            scale_(static_cast<float>(settings::C_resX)/SPACE_X_RESOLUTION);
-        int              clearCount_(0);
         float            joyButtonTimer_(0.f);
         const float      ratio(static_cast<float>(SPACE_X_RESOLUTION)/static_cast<float>(SPACE_Y_RESOLUTION));
 
@@ -86,7 +85,6 @@ namespace window {
                 viewPort_.y_ = windowWidth / ratio;
                 viewPort_.x_  = windowWidth;
             }
-            glClear(GL_COLOR_BUFFER_BIT);
 
             setViewPort();
 
@@ -160,10 +158,6 @@ namespace window {
 
         void display() {
             window_.display();
-            if (++clearCount_ > 30) {
-                glClear(GL_COLOR_BUFFER_BIT);
-                clearCount_ = 0;
-            }
         }
     }
 
@@ -214,9 +208,6 @@ namespace window {
 
         resized();
 
-        // setup OpenGL rendering context, bg color
-        glClearColor(0.f, 0.f, 0.f, 0.f);
-
         // Edit the OpenGL projection matrix
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -243,6 +234,10 @@ namespace window {
     }
 
     void startDrawSpace() {
+        window_.setActive(true);
+        glClearColor(0.f, 0.f, 0.f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
         if (settings::C_shaders)
             backBuffer_.setActive(true);
 
